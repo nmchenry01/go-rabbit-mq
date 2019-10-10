@@ -1,0 +1,25 @@
+# Use root/example as user/password credentials
+version: '3.1'
+
+services:
+  # producer:
+  #   build: ./producer
+  #   ports:
+  #     - '8080:8080'
+  #   restart: on-failure
+  # consumer:
+  #   build: ./consumer
+  #   ports:
+  #     - '8081:8081'
+  #   restart: on-failure
+  rabbitmq:
+      image: rabbitmq:latest
+      hostname: rabbitmq
+      ports:
+          - 5672:5672
+          - 15672:15672
+      volumes:
+          - ./data/rabbitmq:/var/lib/rabbitmq/mnesia/rabbit@app-rabbitmq:cached
+      environment:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
