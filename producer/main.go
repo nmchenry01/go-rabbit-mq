@@ -10,7 +10,7 @@ import (
 )
 
 var url string = "amqp://guest:guest@localhost:5672/"
-var count int = 5
+var count int = 1
 
 func setup(url string) (*amqp.Connection, *amqp.Channel, error) {
 	conn, err := amqp.Dial(url)
@@ -40,13 +40,13 @@ func main() {
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"xml",    // name
-		"fanout", // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		"otherXml", // name
+		"fanout",   // type
+		true,       // durable
+		false,      // auto-deleted
+		false,      // internal
+		false,      // no-wait
+		nil,        // arguments
 	)
 	utils.FailOnError(err, "Failed to declare an exchange")
 
@@ -54,10 +54,10 @@ func main() {
 
 		// Send a message
 		err = ch.Publish(
-			"xml", // exchange
-			"",    // routing key
-			false, // mandatory
-			false, // immediate
+			"otherXml", // exchange
+			"",         // routing key
+			false,      // mandatory
+			false,      // immediate
 			amqp.Publishing{
 				ContentType: "application/xml",
 				Body:        xml,

@@ -8,9 +8,11 @@ import (
 )
 
 type MessageClient struct {
-	Connection *amqp.Connection
-	Channel    *amqp.Channel
-	Queue      amqp.Queue
+	ExchangeName string
+	QueueName    string
+	Connection   *amqp.Connection
+	Channel      *amqp.Channel
+	Queue        amqp.Queue
 }
 
 func connect(url string) (*amqp.Connection, error) {
@@ -35,29 +37,29 @@ func createChannel(conn *amqp.Connection) (*amqp.Channel, error) {
 	return ch, err
 }
 
-func initTopography(ch *amqp.Channel) (amqp.Queue, error) {
+func initTopography(ch *amqp.Channel, exchangeName string, queueName string) (amqp.Queue, error) {
 	log.Println("Initializing queue topography...")
 
 	err := ch.ExchangeDeclare(
-		"xml",    // name
-		"fanout", // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments)
+		exchangeName, // name
+		"fanout",     // type
+		true,         // durable
+		false,        // auto-deleted
+		false,        // internal
+		false,        // no-wait
+		nil,          // arguments)
 	)
 	if err != nil {
 		return amqp.Queue{}, err
 	}
 
 	q, err := ch.QueueDeclare(
-		"xmlQueue", // name
-		false,      // durable
-		false,      // delete when unused
-		false,      // exclusive
-		false,      // no-wait
-		nil,        // arguments
+		queueName, // name
+		false,     // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	if err != nil {
 		return amqp.Queue{}, err
@@ -65,9 +67,9 @@ func initTopography(ch *amqp.Channel) (amqp.Queue, error) {
 
 	// Bind queue to the exchange
 	err = ch.QueueBind(
-		q.Name, // queue name
-		"",     // routing key
-		"xml",  // exchange
+		q.Name,       // queue name
+		"",           // routing key
+		exchangeName, // exchange
 		false,
 		nil,
 	)
@@ -90,7 +92,7 @@ func (client *MessageClient) Setup(url string) error {
 		return err
 	}
 
-	q, err := initTopography(ch)
+	q, err := initTopography(ch, client.ExchangeName, client.QueueName)
 	if err != nil {
 		return err
 	}
