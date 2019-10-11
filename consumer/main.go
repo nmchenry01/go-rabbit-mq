@@ -14,45 +14,32 @@ import (
 
 var url string = "amqp://guest:guest@localhost:5672/"
 
-type clients struct {
-	inboundClient  *client.MessageClient
-	outboundClient *client.MessageClient
+func initClients(clients map[string]*client.MessageClient) (map[string]<-chan amqp.Delivery, error) {
+	amqpChannels := make(map[string]<-chan amqp.Delivery)
+
+	for key, client := range clients {
+		err := client.Setup(url)
+		if err != nil {
+			return nil, err
+		}
+
+		amqpChannel, err := client.Consume()
+		if err != nil {
+			return nil, err
+		}
+
+		amqpChannels[key] = amqpChannel
+	}
+
+	return amqpChannels, nil
 }
 
-func initClients(inboundClient *client.MessageClient, outboundClient *client.MessageClient) (<-chan amqp.Delivery, <-chan amqp.Delivery, error) {
-	// Run setup procedure for inboundClient
-	err := inboundClient.Setup(url)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Run setup procedure for outboundClient
-	err = outboundClient.Setup(url)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Get message feed for inboundClient
-	inbound, err := inboundClient.Consume()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Get message feed for outboundClient
-	outbound, err := outboundClient.Consume()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return inbound, outbound, nil
-}
-
-func processMessages(client *client.MessageClient, inbound <-chan amqp.Delivery, outbound <-chan amqp.Delivery) {
+func processMessages(amqpChannels map[string]<-chan amqp.Delivery) {
 	for {
 		select {
-		case msg, ok := <-inbound:
+		case msg, ok := <-amqpChannels["inboundClient"]:
 			if !ok {
-				log.Println("Channel closed")
+				log.Println("Inbound channel closed")
 				return
 			}
 
@@ -63,9 +50,9 @@ func processMessages(client *client.MessageClient, inbound <-chan amqp.Delivery,
 
 			fmt.Printf("SignatureValue: %#v\n", v.AppHdr.HeadSignature.Signature.SignatureValue)
 
-		case msg, ok := <-outbound:
+		case msg, ok := <-amqpChannels["outboundClient"]:
 			if !ok {
-				log.Println("Channel closed")
+				log.Println("Outbound channel closed")
 				return
 			}
 
@@ -79,24 +66,29 @@ func processMessages(client *client.MessageClient, inbound <-chan amqp.Delivery,
 	}
 }
 
-func setup(clients clients) {
-	inbound, outbound, err := initClients(clients.inboundClient, clients.outboundClient)
+func setup(clients map[string]*client.MessageClient) {
+	amqpChannels, err := initClients(clients)
 	if err != nil {
 		utils.FailOnError(err, "Failed to setup clients")
 	}
-	defer clients.inboundClient.Connection.Close()
-	defer clients.outboundClient.Connection.Close()
 
-	processMessages(clients.inboundClient, inbound, outbound)
+	for _, client := range clients {
+		defer client.Connection.Close()
+	}
+
+	processMessages(amqpChannels)
 }
 
 func main() {
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 
-	inboundClient := &client.MessageClient{ExchangeName: "xml", QueueName: "xmlQueue"}
-	outboundClient := &client.MessageClient{ExchangeName: "otherXml", QueueName: "otherXmlQueue"}
+	inboundClient := &client.MessageClient{ExchangeName: "inbound", QueueName: "inboundQueue"}
+	outboundClient := &client.MessageClient{ExchangeName: "outbound", QueueName: "outboundQueue"}
 
-	clients := clients{inboundClient, outboundClient}
+	clients := map[string]*client.MessageClient{
+		"inboundClient":  inboundClient,
+		"outboundClient": outboundClient,
+	}
 
 	for {
 		setup(clients)

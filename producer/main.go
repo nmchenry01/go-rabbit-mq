@@ -40,7 +40,7 @@ func main() {
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"otherXml", // name
+		"outbound", // name
 		"fanout",   // type
 		true,       // durable
 		false,      // auto-deleted
@@ -54,7 +54,7 @@ func main() {
 
 		// Send a message
 		err = ch.Publish(
-			"otherXml", // exchange
+			"outbound", // exchange
 			"",         // routing key
 			false,      // mandatory
 			false,      // immediate
