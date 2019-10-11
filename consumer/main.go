@@ -39,7 +39,7 @@ func processMessages(amqpChannels map[string]<-chan amqp.Delivery) {
 		select {
 		case msg, ok := <-amqpChannels["inboundClient"]:
 			if !ok {
-				log.Println("Inbound channel closed")
+				log.Printf("Inbound channel closed")
 				return
 			}
 
@@ -76,11 +76,13 @@ func setup(clients map[string]*client.MessageClient) {
 		defer client.Connection.Close()
 	}
 
+	log.Println("Clients setup and ready to receive messages")
+
 	processMessages(amqpChannels)
 }
 
 func main() {
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	log.Println(" [*] Waiting for messages. To exit press CTRL+C")
 
 	inboundClient := &client.MessageClient{ExchangeName: "inbound", QueueName: "inboundQueue"}
 	outboundClient := &client.MessageClient{ExchangeName: "outbound", QueueName: "outboundQueue"}

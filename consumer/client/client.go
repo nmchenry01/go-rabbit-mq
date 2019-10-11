@@ -2,7 +2,6 @@ package client
 
 import (
 	"errors"
-	"log"
 
 	"github.com/streadway/amqp"
 )
@@ -16,8 +15,6 @@ type MessageClient struct {
 }
 
 func connect(url string) (*amqp.Connection, error) {
-	log.Println("Initializing connection...")
-
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -27,8 +24,6 @@ func connect(url string) (*amqp.Connection, error) {
 }
 
 func createChannel(conn *amqp.Connection) (*amqp.Channel, error) {
-	log.Println("Initializing channel...")
-
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, err
@@ -38,8 +33,6 @@ func createChannel(conn *amqp.Connection) (*amqp.Channel, error) {
 }
 
 func initTopography(ch *amqp.Channel, exchangeName string, queueName string) (amqp.Queue, error) {
-	log.Println("Initializing queue topography...")
-
 	err := ch.ExchangeDeclare(
 		exchangeName, // name
 		"fanout",     // type
@@ -100,8 +93,6 @@ func (client *MessageClient) Setup(url string) error {
 	client.Connection = conn
 	client.Channel = ch
 	client.Queue = q
-
-	log.Println("Successfully initialized client!")
 
 	return nil
 }
