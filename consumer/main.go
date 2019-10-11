@@ -15,63 +15,61 @@ import (
 var url string = "amqp://guest:guest@localhost:5672/"
 
 type clients struct {
-	xmlClient      *client.MessageClient
-	otherXMLClient *client.MessageClient
+	inboundClient  *client.MessageClient
+	outboundClient *client.MessageClient
 }
 
-func setupAllClients(xmlClient *client.MessageClient, otherXMLClient *client.MessageClient) (<-chan amqp.Delivery, <-chan amqp.Delivery, error) {
-	// Run setup procedure for xmlClient
-	err := xmlClient.Setup(url)
+func initClients(inboundClient *client.MessageClient, outboundClient *client.MessageClient) (<-chan amqp.Delivery, <-chan amqp.Delivery, error) {
+	// Run setup procedure for inboundClient
+	err := inboundClient.Setup(url)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Run setup procedure for otherXMLClient
-	err = otherXMLClient.Setup(url)
+	// Run setup procedure for outboundClient
+	err = outboundClient.Setup(url)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Get message feed for xmlClient
-	xmlMsgs, err := xmlClient.Consume()
+	// Get message feed for inboundClient
+	inbound, err := inboundClient.Consume()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Get message feed for otherXMLClient
-	otherXMLMsgs, err := otherXMLClient.Consume()
+	// Get message feed for outboundClient
+	outbound, err := outboundClient.Consume()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return xmlMsgs, otherXMLMsgs, nil
+	return inbound, outbound, nil
 }
 
-func handleMessages(client *client.MessageClient, xmlMsgs <-chan amqp.Delivery, otherXMLMsgs <-chan amqp.Delivery) {
+func processMessages(client *client.MessageClient, inbound <-chan amqp.Delivery, outbound <-chan amqp.Delivery) {
 	for {
 		select {
-		case msg, ok := <-xmlMsgs:
+		case msg, ok := <-inbound:
 			if !ok {
 				log.Println("Channel closed")
 				return
 			}
 
-			log.Println("Received a message from xmlMsgs")
+			log.Println("Received a message from inbound")
 			v := models.Pacs008Message{}
 			err := xml.Unmarshal(msg.Body, &v)
 			utils.FailOnError(err, "Failed to unmarshal XML")
 
 			fmt.Printf("SignatureValue: %#v\n", v.AppHdr.HeadSignature.Signature.SignatureValue)
 
-			client.Channel.Close()
-
-		case msg, ok := <-otherXMLMsgs:
+		case msg, ok := <-outbound:
 			if !ok {
 				log.Println("Channel closed")
 				return
 			}
 
-			log.Println("Received a message from otherXMLMsgs")
+			log.Println("Received a message from outbound")
 			v := models.Pacs008Message{}
 			err := xml.Unmarshal(msg.Body, &v)
 			utils.FailOnError(err, "Failed to unmarshal XML")
@@ -81,26 +79,26 @@ func handleMessages(client *client.MessageClient, xmlMsgs <-chan amqp.Delivery, 
 	}
 }
 
-func processMessages(clients clients) {
-	xmlMsgs, otherXMLMsgs, err := setupAllClients(clients.xmlClient, clients.otherXMLClient)
+func setup(clients clients) {
+	inbound, outbound, err := initClients(clients.inboundClient, clients.outboundClient)
 	if err != nil {
 		utils.FailOnError(err, "Failed to setup clients")
 	}
-	defer clients.xmlClient.Connection.Close()
-	defer clients.otherXMLClient.Connection.Close()
+	defer clients.inboundClient.Connection.Close()
+	defer clients.outboundClient.Connection.Close()
 
-	handleMessages(clients.xmlClient, xmlMsgs, otherXMLMsgs)
+	processMessages(clients.inboundClient, inbound, outbound)
 }
 
 func main() {
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 
-	xmlClient := &client.MessageClient{ExchangeName: "xml", QueueName: "xmlQueue"}
-	otherXMLClient := &client.MessageClient{ExchangeName: "otherXml", QueueName: "otherXmlQueue"}
+	inboundClient := &client.MessageClient{ExchangeName: "xml", QueueName: "xmlQueue"}
+	outboundClient := &client.MessageClient{ExchangeName: "otherXml", QueueName: "otherXmlQueue"}
 
-	clients := clients{xmlClient, otherXMLClient}
+	clients := clients{inboundClient, outboundClient}
 
 	for {
-		processMessages(clients)
+		setup(clients)
 	}
 }
