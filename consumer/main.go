@@ -6,17 +6,16 @@ import (
 	"github.com/streadway/amqp"
 
 	"github.com/nmchenry/go-rabbit-mq/consumer/client"
+	"github.com/nmchenry/go-rabbit-mq/consumer/config"
 	"github.com/nmchenry/go-rabbit-mq/consumer/handlers"
 	"github.com/nmchenry/go-rabbit-mq/consumer/utils"
 )
 
-var url string = "amqp://guest:guest@localhost:5672/"
-
-func initClients(clients map[string]*client.MessageClient) (map[string]<-chan amqp.Delivery, error) {
+func initClients(clients map[string]*client.MessageClient, configuration config.Configurations) (map[string]<-chan amqp.Delivery, error) {
 	amqpChannels := make(map[string]<-chan amqp.Delivery)
 
 	for key, client := range clients {
-		err := client.Setup(url)
+		err := client.Setup(configuration.Client.URL)
 		if err != nil {
 			return nil, err
 		}
@@ -37,14 +36,14 @@ func processMessages(amqpChannels map[string]<-chan amqp.Delivery) {
 		select {
 		case msg, ok := <-amqpChannels["inboundClient"]:
 			if !ok {
-				log.Printf("Inbound channel closed")
+				log.Printf("Inbound channel closed unexpectedly")
 				return
 			}
 
 			handlers.InboundHandler(msg)
 		case msg, ok := <-amqpChannels["outboundClient"]:
 			if !ok {
-				log.Println("Outbound channel closed")
+				log.Println("Outbound channel closed unexpectedly")
 				return
 			}
 
@@ -53,8 +52,8 @@ func processMessages(amqpChannels map[string]<-chan amqp.Delivery) {
 	}
 }
 
-func setup(clients map[string]*client.MessageClient) {
-	amqpChannels, err := initClients(clients)
+func setup(clients map[string]*client.MessageClient, configuration config.Configurations) {
+	amqpChannels, err := initClients(clients, configuration)
 	if err != nil {
 		utils.FailOnError(err, "Failed to setup clients")
 	}
@@ -72,6 +71,11 @@ func setup(clients map[string]*client.MessageClient) {
 func main() {
 	log.Println(" [*] Waiting for messages. To exit press CTRL+C")
 
+	configuration, err := config.Init()
+	if err != nil {
+		utils.FailOnError(err, "Failed to initialize app configurations")
+	}
+
 	inboundClient := &client.MessageClient{ExchangeName: "inbound", QueueName: "inboundQueue"}
 	outboundClient := &client.MessageClient{ExchangeName: "outbound", QueueName: "outboundQueue"}
 
@@ -81,6 +85,6 @@ func main() {
 	}
 
 	for {
-		setup(clients)
+		setup(clients, configuration)
 	}
 }
