@@ -1,2 +1,6 @@
 client: 
   url: "amqp://guest:guest@localhost:5672/"
+  inboundExchange: "inbound"
+  outboundExchange: "outbound"
+  inboundQueue: "inboundQueue"
+  outboundQueue: "outboundQueue"

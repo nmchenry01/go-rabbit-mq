@@ -76,9 +76,14 @@ func main() {
 		utils.FailOnError(err, "Failed to initialize app configurations")
 	}
 
-	inboundClient := &client.MessageClient{ExchangeName: "inbound", QueueName: "inboundQueue"}
-	outboundClient := &client.MessageClient{ExchangeName: "outbound", QueueName: "outboundQueue"}
-
+	inboundClient := &client.MessageClient{
+		ExchangeName: configuration.Client.InboundExchange,
+		QueueName:    configuration.Client.InboundQueue,
+	}
+	outboundClient := &client.MessageClient{
+		ExchangeName: configuration.Client.OutboundExchange,
+		QueueName:    configuration.Client.OutboundQueue,
+	}
 	clients := map[string]*client.MessageClient{
 		"inboundClient":  inboundClient,
 		"outboundClient": outboundClient,

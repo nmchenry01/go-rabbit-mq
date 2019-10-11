@@ -9,7 +9,11 @@ type Configurations struct {
 }
 
 type Client struct {
-	URL string
+	URL              string
+	InboundExchange  string
+	OutboundExchange string
+	InboundQueue     string
+	OutboundQueue    string
 }
 
 func Init() (Configurations, error) {
