@@ -1,14 +1,12 @@
 package main
 
 import (
-	"encoding/xml"
-	"fmt"
 	"log"
 
 	"github.com/streadway/amqp"
 
 	"github.com/nmchenry/go-rabbit-mq/consumer/client"
-	"github.com/nmchenry/go-rabbit-mq/consumer/models"
+	"github.com/nmchenry/go-rabbit-mq/consumer/handlers"
 	"github.com/nmchenry/go-rabbit-mq/consumer/utils"
 )
 
@@ -43,25 +41,14 @@ func processMessages(amqpChannels map[string]<-chan amqp.Delivery) {
 				return
 			}
 
-			log.Println("Received a message from inbound")
-			v := models.Pacs008Message{}
-			err := xml.Unmarshal(msg.Body, &v)
-			utils.FailOnError(err, "Failed to unmarshal XML")
-
-			fmt.Printf("SignatureValue: %#v\n", v.AppHdr.HeadSignature.Signature.SignatureValue)
-
+			handlers.InboundHandler(msg)
 		case msg, ok := <-amqpChannels["outboundClient"]:
 			if !ok {
 				log.Println("Outbound channel closed")
 				return
 			}
 
-			log.Println("Received a message from outbound")
-			v := models.Pacs008Message{}
-			err := xml.Unmarshal(msg.Body, &v)
-			utils.FailOnError(err, "Failed to unmarshal XML")
-
-			fmt.Printf("SignatureValue: %#v\n", v.AppHdr.HeadSignature.Signature.SignatureValue)
+			handlers.OutboundHandler(msg)
 		}
 	}
 }
@@ -72,6 +59,7 @@ func setup(clients map[string]*client.MessageClient) {
 		utils.FailOnError(err, "Failed to setup clients")
 	}
 
+	// Make sure all connections are closed/reset on restart
 	for _, client := range clients {
 		defer client.Connection.Close()
 	}
