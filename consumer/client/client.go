@@ -107,7 +107,7 @@ func (client *MessageClient) Consume() (<-chan amqp.Delivery, error) {
 	deliveries, err := client.Channel.Consume(
 		client.Queue.Name, // queue
 		"",                // consumer
-		true,              // auto-ack
+		false,             // auto-ack
 		false,             // exclusive
 		false,             // no-local
 		false,             // no-wait

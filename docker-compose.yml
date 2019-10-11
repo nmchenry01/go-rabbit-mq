@@ -13,7 +13,7 @@ services:
   #     - '8081:8081'
   #   restart: on-failure
   rabbitmq:
-      image: rabbitmq:latest
+      image: rabbitmq:management
       hostname: rabbitmq
       ports:
           - 5672:5672

@@ -40,14 +40,26 @@ func processMessages(amqpChannels map[string]<-chan amqp.Delivery) {
 				return
 			}
 
-			handlers.InboundHandler(msg)
+			err := handlers.InboundHandler(msg)
+			if err != nil {
+				msg.Nack(false, false)
+				log.Printf("There was a problem processing a message: %s", err)
+			} else {
+				msg.Ack(false)
+			}
 		case msg, ok := <-amqpChannels["outboundClient"]:
 			if !ok {
 				log.Println("Outbound channel closed unexpectedly")
 				return
 			}
 
-			handlers.OutboundHandler(msg)
+			err := handlers.OutboundHandler(msg)
+			if err != nil {
+				msg.Nack(false, false)
+				log.Printf("There was a problem processing a message: %s", err)
+			} else {
+				msg.Ack(false)
+			}
 		}
 	}
 }

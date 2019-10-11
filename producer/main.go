@@ -10,7 +10,7 @@ import (
 )
 
 var url string = "amqp://guest:guest@localhost:5672/"
-var count int = 1
+var count int = 11000
 
 func setup(url string) (*amqp.Connection, *amqp.Channel, error) {
 	conn, err := amqp.Dial(url)
