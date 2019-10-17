@@ -5,19 +5,18 @@ import (
 )
 
 type Configurations struct {
-	Client Client
+	InboundRabbitMQConfigurations  RabbitMQConfigurations
+	OutboundRabbitMQConfigurations RabbitMQConfigurations
 }
 
-type Client struct {
-	URL              string
-	InboundExchange  string
-	OutboundExchange string
-	InboundQueue     string
-	OutboundQueue    string
+type RabbitMQConfigurations struct {
+	URL          string
+	ExchangeName string
+	QueueName    string
 }
 
 func Init() (Configurations, error) {
-	viper.SetConfigName("config")
+	viper.SetConfigName("./consumer/config")
 	viper.AddConfigPath(".")
 	viper.AutomaticEnv()
 	viper.SetConfigType("yml")

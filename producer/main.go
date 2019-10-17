@@ -10,7 +10,7 @@ import (
 )
 
 var url string = "amqp://guest:guest@localhost:5672/"
-var count int = 11000
+var count int = 10
 
 func setup(url string) (*amqp.Connection, *amqp.Channel, error) {
 	conn, err := amqp.Dial(url)
@@ -30,7 +30,7 @@ func main() {
 	start := time.Now()
 
 	// Read in XML file
-	xml, err := ioutil.ReadFile("./data/pacs008.xml")
+	xml, err := ioutil.ReadFile("./producer/data/pacs008.xml")
 	utils.FailOnError(err, "Failed to read XML")
 
 	// Setup a connection with RabbitMQ
@@ -40,13 +40,13 @@ func main() {
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"outbound", // name
-		"fanout",   // type
-		true,       // durable
-		false,      // auto-deleted
-		false,      // internal
-		false,      // no-wait
-		nil,        // arguments
+		"inbound", // name
+		"fanout",  // type
+		true,      // durable
+		false,     // auto-deleted
+		false,     // internal
+		false,     // no-wait
+		nil,       // arguments
 	)
 	utils.FailOnError(err, "Failed to declare an exchange")
 
@@ -54,10 +54,10 @@ func main() {
 
 		// Send a message
 		err = ch.Publish(
-			"outbound", // exchange
-			"",         // routing key
-			false,      // mandatory
-			false,      // immediate
+			"inbound", // exchange
+			"",        // routing key
+			false,     // mandatory
+			false,     // immediate
 			amqp.Publishing{
 				ContentType: "application/xml",
 				Body:        xml,

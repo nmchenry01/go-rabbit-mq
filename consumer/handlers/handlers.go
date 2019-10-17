@@ -6,13 +6,13 @@ import (
 	"log"
 
 	"github.com/nmchenry/go-rabbit-mq/consumer/models"
-	"github.com/streadway/amqp"
 )
 
-func InboundHandler(msg amqp.Delivery) error {
+// InboundHandler - A function for handling inbound messages
+func InboundHandler(msg []byte) error {
 	log.Println("Received a message from inbound")
 	v := models.Pacs008Message{}
-	err := xml.Unmarshal(msg.Body, &v)
+	err := xml.Unmarshal(msg, &v)
 	if err != nil {
 		return err
 	}
@@ -22,10 +22,11 @@ func InboundHandler(msg amqp.Delivery) error {
 	return nil
 }
 
-func OutboundHandler(msg amqp.Delivery) error {
+// OutboundHandler - A function for handling outbound messages from RabbitMQ
+func OutboundHandler(msg []byte) error {
 	log.Println("Received a message from outbound")
 	v := models.Pacs008Message{}
-	err := xml.Unmarshal(msg.Body, &v)
+	err := xml.Unmarshal(msg, &v)
 	if err != nil {
 		return err
 	}

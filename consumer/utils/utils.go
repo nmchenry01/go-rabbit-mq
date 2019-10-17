@@ -8,3 +8,5 @@ func FailOnError(err error, msg string) {
 		log.Fatalf("%s: %s", msg, err)
 	}
 }
+
+// TODO: Add EmptyInterface function
