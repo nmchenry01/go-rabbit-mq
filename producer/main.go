@@ -27,6 +27,13 @@ func waitForInterval() {
 	log.Printf("Waiting for %d milliseconds\n", randomInt)
 }
 
+func sendMessageAndWait(messageProducer messageproducer.MessageProducer, data []byte) {
+	for {
+		waitForInterval()
+		messageProducer.Send(data)
+	}
+}
+
 func main() {
 	// Get configuration
 	configurations, err := config.Init()
@@ -45,16 +52,10 @@ func main() {
 	utils.FailOnError(err, "Failed to initialize producer")
 	defer outboundRabbitMQProducer.Disconnect()
 
-	for {
-		waitForInterval()
+	forever := make(chan int)
 
-		// Send a message on inbound queue
-		inboundRabbitMQProducer.Send(data)
-		utils.FailOnError(err, "Failed to publish a message")
+	go sendMessageAndWait(inboundRabbitMQProducer, data)
+	go sendMessageAndWait(outboundRabbitMQProducer, data)
 
-		// Send a message on outbound queue
-		outboundRabbitMQProducer.Send(data)
-		utils.FailOnError(err, "Failed to publish a message")
-
-	}
+	<-forever
 }
