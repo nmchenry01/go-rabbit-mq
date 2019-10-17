@@ -30,7 +30,7 @@ func main() {
 	start := time.Now()
 
 	// Read in XML file
-	xml, err := ioutil.ReadFile("./producer/data/pacs008.xml")
+	xml, err := ioutil.ReadFile("./data/pacs008.xml")
 	utils.FailOnError(err, "Failed to read XML")
 
 	// Setup a connection with RabbitMQ
