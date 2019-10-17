@@ -3,69 +3,58 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"time"
 
+	"github.com/nmchenry/go-rabbit-mq/producer/config"
+	"github.com/nmchenry/go-rabbit-mq/producer/messageproducer"
 	"github.com/nmchenry/go-rabbit-mq/producer/utils"
-	"github.com/streadway/amqp"
 )
 
-var url string = "amqp://guest:guest@localhost:5672/"
-var count int = 10
-
-func setup(url string) (*amqp.Connection, *amqp.Channel, error) {
-	conn, err := amqp.Dial(url)
+// TODO: Extend to read in all possible message types
+func readData() ([]byte, error) {
+	data, err := ioutil.ReadFile("./data/pacs008.xml")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, nil, err
-	}
+	return data, nil
+}
 
-	return conn, ch, nil
+func waitForInterval() {
+	randomInt := rand.Intn(1000)
+	time.Sleep(time.Duration(randomInt) * time.Millisecond)
+	log.Printf("Waiting for %d milliseconds\n", randomInt)
 }
 
 func main() {
-	start := time.Now()
+	// Get configuration
+	configurations, err := config.Init()
+	utils.FailOnError(err, "Failed to initialize app configurations")
 
-	// Read in XML file
-	xml, err := ioutil.ReadFile("./data/pacs008.xml")
-	utils.FailOnError(err, "Failed to read XML")
+	// Read in File(s)
+	data, err := readData()
+	utils.FailOnError(err, "Failed to read data")
 
-	// Setup a connection with RabbitMQ
-	conn, ch, err := setup(url)
-	utils.FailOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-	defer ch.Close()
+	// Initialize producer(s)
+	inboundRabbitMQProducer, err := messageproducer.NewRabbitMQProducer(configurations, "inbound")
+	utils.FailOnError(err, "Failed to initialize producer")
+	defer inboundRabbitMQProducer.Disconnect()
 
-	err = ch.ExchangeDeclare(
-		"inbound", // name
-		"fanout",  // type
-		true,      // durable
-		false,     // auto-deleted
-		false,     // internal
-		false,     // no-wait
-		nil,       // arguments
-	)
-	utils.FailOnError(err, "Failed to declare an exchange")
+	outboundRabbitMQProducer, err := messageproducer.NewRabbitMQProducer(configurations, "outbound")
+	utils.FailOnError(err, "Failed to initialize producer")
+	defer outboundRabbitMQProducer.Disconnect()
 
-	for i := 0; i < count; i++ {
+	for {
+		waitForInterval()
 
-		// Send a message
-		err = ch.Publish(
-			"inbound", // exchange
-			"",        // routing key
-			false,     // mandatory
-			false,     // immediate
-			amqp.Publishing{
-				ContentType: "application/xml",
-				Body:        xml,
-			})
+		// Send a message on inbound queue
+		inboundRabbitMQProducer.Send(data)
+		utils.FailOnError(err, "Failed to publish a message")
+
+		// Send a message on outbound queue
+		outboundRabbitMQProducer.Send(data)
 		utils.FailOnError(err, "Failed to publish a message")
 
 	}
-
-	elapsed := time.Since(start)
-	log.Printf("Process took %s", elapsed)
 }

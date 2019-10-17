@@ -1,0 +1,8 @@
+inboundProducerConfigurations: 
+  url: "amqp://guest:guest@localhost:5672/"
+  count: 1
+  exchangeName: "inbound"
+outboundProducerConfigurations: 
+  url: "amqp://guest:guest@localhost:5672/"
+  count: 1
+  exchangeName: "outbound"

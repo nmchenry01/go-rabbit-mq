@@ -5,14 +5,14 @@ import (
 )
 
 type Configurations struct {
-	InboundRabbitMQConfigurations  RabbitMQConfigurations
-	OutboundRabbitMQConfigurations RabbitMQConfigurations
+	InboundProducerConfigurations  ProducerConfigurations
+	OutboundProducerConfigurations ProducerConfigurations
 }
 
-type RabbitMQConfigurations struct {
+type ProducerConfigurations struct {
 	URL          string
+	Count        int
 	ExchangeName string
-	QueueName    string
 }
 
 func Init() (Configurations, error) {
