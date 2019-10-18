@@ -2,16 +2,6 @@
 version: '3.1'
 
 services:
-  # producer:
-  #   build: ./producer
-  #   ports:
-  #     - '8080:8080'
-  #   restart: on-failure
-  # consumer:
-  #   build: ./consumer
-  #   ports:
-  #     - '8081:8081'
-  #   restart: on-failure
   rabbitmq:
       image: rabbitmq:management
       hostname: rabbitmq
@@ -23,3 +13,13 @@ services:
       environment:
           RABBITMQ_DEFAULT_USER: guest
           RABBITMQ_DEFAULT_PASS: guest
+  ibmmq:
+    image: ibmcom/mq:latest
+    ports:
+      - 1414:1414
+      - 9443:9443
+    environment:
+      LICENSE: accept
+      MQ_QMGR_NAME: "DevManager"
+      MQ_APP_PASSWORD: "app"
+      MQ_ADMIN_PASSWORD: "password"
