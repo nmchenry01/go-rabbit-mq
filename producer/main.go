@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/nmchenry/go-rabbit-mq/producer/config"
@@ -11,11 +14,30 @@ import (
 	"github.com/nmchenry/go-rabbit-mq/producer/utils"
 )
 
-// TODO: Extend to read in all possible message types
-func readData() ([]byte, error) {
-	data, err := ioutil.ReadFile("./data/pacs008.xml")
+func readData() ([][]byte, error) {
+	files, err := ioutil.ReadDir("./data")
 	if err != nil {
 		return nil, err
+	}
+
+	var data [][]byte
+
+	path, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		filePath := filepath.Join(fmt.Sprintf("%s/data", path), file.Name())
+
+		log.Println(filePath)
+
+		fileData, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		data = append(data, fileData)
 	}
 
 	return data, nil
@@ -27,10 +49,15 @@ func waitForInterval() {
 	log.Printf("Waiting for %d milliseconds\n", randomInt)
 }
 
-func sendMessageAndWait(messageProducer messageproducer.MessageProducer, data []byte) {
+func selectRandomData(data [][]byte) []byte {
+	return data[rand.Intn(len(data))]
+}
+
+func sendMessageAndWait(messageProducer messageproducer.MessageProducer, data [][]byte) {
 	for {
 		waitForInterval()
-		err := messageProducer.Send(data)
+		randomData := selectRandomData(data)
+		err := messageProducer.Send(randomData)
 		utils.LogOnError(err, "There was a problem sending a message")
 	}
 }
