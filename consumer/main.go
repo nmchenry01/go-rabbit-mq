@@ -17,14 +17,14 @@ func main() {
 	utils.FailOnError(err, "Failed to initialize app configurations")
 
 	// Init clients
-	inboundRabbitMQClient, err := messageclient.NewRabbitMQClient(configurations, "inbound")
+	inboundRabbitMQClient, err := messageclient.NewRabbitMQClient(configurations.InboundRabbitMQConfigurations)
 	utils.FailOnError(err, "There was a problem initializing a client")
 
 	if inboundRabbitMQClient != nil {
 		defer inboundRabbitMQClient.Disconnect()
 	}
 
-	outboundRabbitMQClient, err := messageclient.NewRabbitMQClient(configurations, "outbound")
+	outboundRabbitMQClient, err := messageclient.NewRabbitMQClient(configurations.OutboundRabbitMQConfigurations)
 	utils.FailOnError(err, "There was a problem initializing a client")
 
 	if outboundRabbitMQClient != nil {

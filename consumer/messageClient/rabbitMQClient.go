@@ -18,18 +18,16 @@ type RabbitMQClient struct {
 }
 
 // NewRabbitMQClient - Initializes a new RabbitMQClient (connection, channels, topography, etc)
-func NewRabbitMQClient(configurations config.Configurations, messageDirection string) (MessageClient, error) {
-	rabbitMQConfigurations, err := selectConfigurations(configurations, messageDirection)
+func NewRabbitMQClient(configurations config.RabbitMQConfigurations) (MessageClient, error) {
+	connection, channel, queue, err := setupRabbitMQ(configurations)
 	if err != nil {
 		return nil, err
 	}
 
-	connection, channel, queue, err := setup(rabbitMQConfigurations)
-
 	newClient := &RabbitMQClient{
-		exchangeName: rabbitMQConfigurations.ExchangeName,
-		queueName:    rabbitMQConfigurations.QueueName,
-		url:          rabbitMQConfigurations.URL,
+		exchangeName: configurations.ExchangeName,
+		queueName:    configurations.QueueName,
+		url:          configurations.URL,
 		connection:   connection,
 		channel:      channel,
 		queue:        queue,
@@ -102,7 +100,7 @@ func (rabbitMQClient *RabbitMQClient) Restart() (MessageClient, error) {
 		QueueName:    rabbitMQClient.queueName,
 	}
 
-	connection, channel, queue, err := setup(existingConfigurations)
+	connection, channel, queue, err := setupRabbitMQ(existingConfigurations)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +117,7 @@ func (rabbitMQClient *RabbitMQClient) Restart() (MessageClient, error) {
 	return newClient, nil
 }
 
-func setup(rabbitMQConfigurations config.RabbitMQConfigurations) (*amqp.Connection, *amqp.Channel, amqp.Queue, error) {
+func setupRabbitMQ(rabbitMQConfigurations config.RabbitMQConfigurations) (*amqp.Connection, *amqp.Channel, amqp.Queue, error) {
 	connection, err := connect(rabbitMQConfigurations.URL)
 	if err != nil {
 		return nil, nil, amqp.Queue{}, err
@@ -195,16 +193,4 @@ func initializeTopography(channel *amqp.Channel, exchangeName string, queueName 
 	}
 
 	return queue, nil
-}
-
-func selectConfigurations(configurations config.Configurations, messageDirection string) (config.RabbitMQConfigurations, error) {
-	if messageDirection == "inbound" {
-		return configurations.InboundRabbitMQConfigurations, nil
-	}
-
-	if messageDirection == "outbound" {
-		return configurations.OutboundRabbitMQConfigurations, nil
-	}
-
-	return config.RabbitMQConfigurations{}, errors.New("Message direction must be set to either 'inbound' or 'outbound'")
 }
