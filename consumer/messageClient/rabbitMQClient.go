@@ -7,7 +7,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// RabbitMQClient - A struct for interacting with RabbitMQ
+// RabbitMQClient - The implementation of message client for RabbitMQ
 type RabbitMQClient struct {
 	exchangeName string
 	queueName    string

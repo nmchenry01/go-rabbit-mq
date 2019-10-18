@@ -7,6 +7,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// RabbitMQProducer - Implementation of a message producer for RabbitMQ
 type RabbitMQProducer struct {
 	url          string
 	count        int

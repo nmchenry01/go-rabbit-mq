@@ -30,7 +30,8 @@ func waitForInterval() {
 func sendMessageAndWait(messageProducer messageproducer.MessageProducer, data []byte) {
 	for {
 		waitForInterval()
-		messageProducer.Send(data)
+		err := messageProducer.Send(data)
+		utils.LogOnError(err, "There was a problem sending a message")
 	}
 }
 
