@@ -2,7 +2,26 @@ inboundRabbitMQConfigurations:
   url: "amqp://guest:guest@localhost:5672/"
   exchangeName: "inbound"
   queueName: "inboundQueue"
+
 outboundRabbitMQConfigurations: 
   url: "amqp://guest:guest@localhost:5672/"
   exchangeName: "outbound"
   queueName: "outboundQueue"
+
+inboundIbmMQConfigurations:
+  queueManagerName: "DevManager"
+  queueName: "DEV.QUEUE.1"
+  channelName: "DEV.APP.SVRCONN"
+  host: "localhost"
+  port: 1414
+  username: "app"
+  password: "app"
+
+outboundIbmMQConfigurations:
+  queueManagerName: "DevManager"
+  queueName: "DEV.QUEUE.2"
+  channelName: "DEV.APP.SVRCONN"
+  host: "localhost"
+  port: 1414
+  username: "app"
+  password: "app"

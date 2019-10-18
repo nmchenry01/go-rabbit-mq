@@ -7,12 +7,24 @@ import (
 type Configurations struct {
 	InboundRabbitMQConfigurations  RabbitMQConfigurations
 	OutboundRabbitMQConfigurations RabbitMQConfigurations
+	InboundIbmMQConfigurations     IbmMQConfigurations
+	OutboundIbmMQConfigurations    IbmMQConfigurations
 }
 
 type RabbitMQConfigurations struct {
 	URL          string
 	ExchangeName string
 	QueueName    string
+}
+
+type IbmMQConfigurations struct {
+	QueueManagerName string
+	QueueName        string
+	ChannelName      string
+	Host             string
+	Port             int
+	Username         string
+	Password         string
 }
 
 func Init() (Configurations, error) {
