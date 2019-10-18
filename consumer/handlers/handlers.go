@@ -17,7 +17,7 @@ func InboundHandler(msg []byte) error {
 		return err
 	}
 
-	fmt.Printf("SignatureValue: %#v\n", v.AppHdr.HeadSignature.Signature.SignatureValue)
+	fmt.Printf("Message type: %#v\n", v.AppHdr.MsgDefIdr)
 
 	return nil
 }
@@ -31,7 +31,7 @@ func OutboundHandler(msg []byte) error {
 		return err
 	}
 
-	fmt.Printf("SignatureValue: %#v\n", v.AppHdr.HeadSignature.Signature.SignatureValue)
+	fmt.Printf("Message type: %#v\n", v.AppHdr.MsgDefIdr)
 
 	return nil
 }
