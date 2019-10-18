@@ -72,11 +72,11 @@ func main() {
 	utils.FailOnError(err, "Failed to read data")
 
 	// Initialize producer(s)
-	inboundRabbitMQProducer, err := messageproducer.NewRabbitMQProducer(configurations, "inbound")
+	inboundRabbitMQProducer, err := messageproducer.NewRabbitMQProducer(configurations.InboundProducerConfigurations)
 	utils.FailOnError(err, "Failed to initialize producer")
 	defer inboundRabbitMQProducer.Disconnect()
 
-	outboundRabbitMQProducer, err := messageproducer.NewRabbitMQProducer(configurations, "outbound")
+	outboundRabbitMQProducer, err := messageproducer.NewRabbitMQProducer(configurations.OutboundProducerConfigurations)
 	utils.FailOnError(err, "Failed to initialize producer")
 	defer outboundRabbitMQProducer.Disconnect()
 

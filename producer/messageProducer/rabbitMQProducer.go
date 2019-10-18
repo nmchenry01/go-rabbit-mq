@@ -1,8 +1,6 @@
 package messageproducer
 
 import (
-	"errors"
-
 	"github.com/nmchenry/go-rabbit-mq/producer/config"
 	"github.com/streadway/amqp"
 )
@@ -17,18 +15,16 @@ type RabbitMQProducer struct {
 }
 
 // NewRabbitMQProducer - Creates a new message producer
-func NewRabbitMQProducer(configurations config.Configurations, messageDirection string) (MessageProducer, error) {
-	messageProducerConfigurations, err := selectConfigurations(configurations, messageDirection)
+func NewRabbitMQProducer(configurations config.ProducerConfigurations) (MessageProducer, error) {
+	connection, channel, err := setup(configurations)
 	if err != nil {
 		return nil, err
 	}
 
-	connection, channel, err := setup(messageProducerConfigurations)
-
 	newProducer := &RabbitMQProducer{
-		url:          messageProducerConfigurations.URL,
-		count:        messageProducerConfigurations.Count,
-		exchangeName: messageProducerConfigurations.ExchangeName,
+		url:          configurations.URL,
+		count:        configurations.Count,
+		exchangeName: configurations.ExchangeName,
 		connection:   connection,
 		channel:      channel,
 	}
@@ -71,18 +67,6 @@ func (rabbitMQProducer *RabbitMQProducer) Disconnect() error {
 	}
 
 	return nil
-}
-
-func selectConfigurations(configurations config.Configurations, messageDirection string) (config.ProducerConfigurations, error) {
-	if messageDirection == "inbound" {
-		return configurations.InboundProducerConfigurations, nil
-	}
-
-	if messageDirection == "outbound" {
-		return configurations.OutboundProducerConfigurations, nil
-	}
-
-	return config.ProducerConfigurations{}, errors.New("Message direction must be set to either 'inbound' or 'outbound'")
 }
 
 func setup(messageProducerConfigurations config.ProducerConfigurations) (*amqp.Connection, *amqp.Channel, error) {
